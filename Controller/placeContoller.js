@@ -25,7 +25,7 @@ export const getIdUserPlace = async (req, res, next) => {
     const dataPlaceUser = itemsData.filter((data) => data.creatorId === idUser);
 
     if (dataPlaceUser.length < 1)
-      throw new HttpError(" data tidak ditemukan, kocak lu", 404);
+      throw new HttpError("data tidak ditemukan, kocak lu", 404);
 
     return res.status(200).json({
       data: dataPlaceUser,
@@ -87,4 +87,21 @@ export const patchPlace = async (req, res, next) => {
     pesan: "Sukses Edith",
     itemsData,
   });
+};
+
+export const deletePlaceId = (req, res, next) => {
+  try {
+    const params = req.params.did;
+    const ambilDataDariDelete = itemsData.filter((data) => data.id !== params);
+    const dataDelete = itemsData.filter((data) => data.id === params);
+    if (dataDelete.length !== 1)
+      throw new HttpError("Tidak ada Ada yang dihapus", 404);
+
+    res.status(201).json({
+      ambilDataDariDelete,
+      pesan: "sukses hapus data",
+    });
+  } catch (err) {
+    next(err);
+  }
 };
