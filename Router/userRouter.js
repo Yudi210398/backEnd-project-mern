@@ -14,6 +14,7 @@ router.post(
   [
     body("email")
       .isEmail()
+      .normalizeEmail()
       .withMessage("tolong masukan email dengan benar")
       .toLowerCase()
       .trim()
@@ -30,7 +31,7 @@ router.post(
     body("password").isLength({ min: 5 }).withMessage("minimal 5 karaketer"),
     body("passValidasi").custom((value, { req }) => {
       if (value !== req.body.password)
-        throw new HttpError("password harus sama", 404);
+        throw new HttpError("password harus sama", 401);
       return true;
     }),
   ],
@@ -42,6 +43,7 @@ router.post(
   [
     body("email")
       .isEmail()
+      .normalizeEmail()
       .withMessage('"tolong masukan email dengan benar"')
       .toLowerCase()
       .trim()
@@ -57,7 +59,14 @@ router.post(
     body("password")
       .isLength({ min: 5 })
       .withMessage("minimal 5 karaketer")
-      .custom(async (value, { req }) => {}),
+      .custom(async (value, { req }) => {
+        const dataIndekds = dataUser.findIndex(
+          (data) => data.email === req.body.email
+        );
+
+        if (dataUser[dataIndekds].password === value) return true;
+        else throw new HttpError("Password Tidak Sama", 401);
+      }),
   ],
   loginUser
 );

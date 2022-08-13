@@ -1,7 +1,8 @@
 import itemsData from "../model/dummyData/placeData/dataPlace.js";
 import HttpError from "../model/Http-Error.js";
 import { v4 } from "uuid";
-
+import { validationResult } from "express-validator";
+import { geoCode } from "../model/util/getApiMap.js";
 export const getAllPlace = async (req, res, next) => {
   try {
     if (itemsData.length === 0) {
@@ -50,43 +51,61 @@ export const getIdPlace = async (req, res, next) => {
 };
 
 export const postDataPlace = async (req, res, next) => {
-  const { gambarUrl, namaTempat, alamat, deskripsi, creatorId, kordinat } =
-    req.body;
+  try {
+    const { gambarUrl, namaTempat, deskripsi, creatorId } = req.body;
+    const geoCodeMap = await geoCode(namaTempat);
+    console.log(geoCodeMap);
+    const error = validationResult(req);
+    const newPlace = {
+      id: v4(),
+      gambarUrl,
+      namaTempat,
+      alamat: await geoCodeMap.alamat,
+      deskripsi,
+      creatorId,
+      kordinat: await geoCodeMap.cordinates,
+    };
+    if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
 
-  const newPlace = {
-    id: v4(),
-    gambarUrl,
-    namaTempat,
-    alamat,
-    deskripsi,
-    creatorId,
-    kordinat,
-  };
-
-  const updateData = itemsData.unshift(newPlace);
-  res.status(201).json({
-    newPlace,
-    updateData,
-    pesan: "Sukses tambah data",
-  });
+    const updateData = itemsData.unshift(newPlace);
+    res.status(201).json({
+      newPlace,
+      updateData,
+      pesan: "Sukses tambah data",
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const patchPlace = async (req, res, next) => {
-  const idPlaceEdith = req.params.eid;
-  const { namaTempat, alamat } = req.body;
-  const dataEdithId = itemsData.filter((data) => data.id === idPlaceEdith);
-  const findIndexPlace = itemsData.findIndex(
-    (dataIndex) => dataIndex.id === idPlaceEdith
-  );
-  const hasilPlace = dataEdithId[0];
-  hasilPlace.namaTempat = namaTempat;
-  hasilPlace.alamat = alamat;
-  itemsData[findIndexPlace] = hasilPlace;
-  res.status(201).json({
-    hasilPlace,
-    pesan: "Sukses Edith",
-    itemsData,
-  });
+  try {
+    const idPlaceEdith = req.params.eid;
+    const { namaTempat, deskripsi } = req.body;
+    const editGeoCode = await geoCode(namaTempat);
+    const error = validationResult(req);
+    console.log(error.array());
+
+    const dataEdithId = itemsData.filter((data) => data.id === idPlaceEdith);
+    const findIndexPlace = itemsData.findIndex(
+      (dataIndex) => dataIndex.id === idPlaceEdith
+    );
+    const hasilPlace = dataEdithId[0];
+    hasilPlace.namaTempat = namaTempat;
+    hasilPlace.deskripsi = deskripsi;
+    hasilPlace.alamat = await editGeoCode.alamat;
+    hasilPlace.kordinat = await editGeoCode.cordinates;
+    if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
+
+    itemsData[findIndexPlace] = hasilPlace;
+    res.status(201).json({
+      hasilPlace,
+      pesan: "Sukses Edith",
+      itemsData,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const deletePlaceId = (req, res, next) => {

@@ -40,7 +40,7 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const error = validationResult(req);
-    if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 404);
+    if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
     const dataLogin = { email, password };
     res.status(201).json({
       dataLogin,

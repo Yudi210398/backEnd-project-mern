@@ -7,13 +7,23 @@ import {
   patchPlace,
   postDataPlace,
 } from "../Controller/placeContoller.js";
-
+import { body } from "express-validator";
+const validateFactor = () => {
+  return [
+    body("namaTempat").isString().trim().notEmpty(),
+    body("deskripsi")
+      .isString()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Karketer Minilal 5 huruf bole anggka"),
+  ];
+};
 const routerPlace = express.Router();
 routerPlace.get("/places", getAllPlace);
 routerPlace.get("/places/user/:uid", getIdUserPlace);
 routerPlace.get("/places/:pid", getIdPlace);
-routerPlace.post("/places", postDataPlace);
-routerPlace.patch("/places/:eid", patchPlace);
+routerPlace.post("/places", validateFactor(), postDataPlace);
+routerPlace.patch("/places/:eid", validateFactor(), patchPlace);
 routerPlace.delete("/places/:did", deletePlaceId);
 
 export default routerPlace;
