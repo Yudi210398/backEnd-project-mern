@@ -1,4 +1,7 @@
 import dataUser from "../model/dummyData/userData/data.js";
+
+import bcrypt from "bcrypt";
+import userSchema from "../model/dataReal/userdata.js";
 import HttpError from "../model/Http-Error.js";
 import { validationResult } from "express-validator";
 export const user = async (req, res, next) => {
@@ -21,15 +24,33 @@ export const user = async (req, res, next) => {
 
 export const daftarUser = async (req, res, next) => {
   try {
-    const { email, nama, password, passValidasi } = req.body;
+    const { email, nama, password, gambar, passValidasi } = req.body;
+    const data = await userSchema.find({ email });
 
+    if (data.length > 0) throw new HttpError("Email sudah digunakan", 404);
     const error = validationResult(req);
-    console.log(error.array());
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 404);
-    const dataDaftar = { email, nama, password, passValidasi };
-    res.status(201).json({
-      dataDaftar,
-      pesan: "sukses tambah data",
+
+    await bcrypt.hash(password, 10, async (err, hash) => {
+      try {
+        if (err) throw new HttpError("Tidak bisa encrype password", 401);
+        else {
+          const daftar = await new userSchema({
+            email,
+            nama,
+            password: hash,
+            gambar,
+            places: 0,
+          }).save();
+
+          res.status(201).json({
+            daftar,
+            pesan: "sukses tambah data",
+          });
+        }
+      } catch (err) {
+        next(err);
+      }
     });
   } catch (err) {
     next(err);
@@ -40,7 +61,10 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const error = validationResult(req);
+
+    console.log(!error.isEmpty(), `tete`);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
+
     const dataLogin = { email, password };
     res.status(201).json({
       dataLogin,
