@@ -8,7 +8,8 @@ export const geoCode = async (alamat) => {
   );
 
   const data = respone.data;
-  if (!data) throw new HttpError("Tidak bisa menemukan lokasi", 422);
+  if (!data || data.length === 0)
+    throw new HttpError("Tidak bisa menemukan lokasi", 422);
 
   const dataAll = {
     cordinates: { lat: data[0].lat, lng: data[0].lon },

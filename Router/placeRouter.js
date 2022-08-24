@@ -4,6 +4,7 @@ import {
   getAllPlace,
   getIdPlace,
   getIdUserPlace,
+  getMyAllPlaces,
   patchPlace,
   postDataPlace,
 } from "../Controller/placeContoller.js";
@@ -21,6 +22,7 @@ const validateFactor = () => {
 const routerPlace = express.Router();
 routerPlace.get("/places", getAllPlace);
 routerPlace.get("/places/user/:uid", getIdUserPlace);
+routerPlace.get("/places/myallplaces/:uId", getMyAllPlaces);
 routerPlace.get("/places/:pid", getIdPlace);
 routerPlace.post("/places", validateFactor(), postDataPlace);
 routerPlace.patch("/places/:eid", validateFactor(), patchPlace);

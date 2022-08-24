@@ -13,6 +13,20 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
 (async () => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
+
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "OPTIONS, GET, POST, PUT, PATCH, DELETE"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+    next();
+  });
+
   app.use("/api", routerUser);
   app.use("/api", routerPlace);
   app.use(routerError);
@@ -33,6 +47,11 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
     res.status(status).json({ error: { pesan: `${pesan + " " + status}` } });
   });
 
-  await mongoose.connect(URLDATABASE);
-  await app.listen(port, () => console.log(`konek dan konek ke database`));
+  await mongoose.connect(URLDATABASE, async (err, db) => {
+    if (err) console.log(err, `tete`);
+    await app.listen(port, () => console.log(`konek dan konek ke database`));
+    db.on("disconnect", function (errrs) {
+      console.log("Error...close", errrs);
+    });
+  });
 })();

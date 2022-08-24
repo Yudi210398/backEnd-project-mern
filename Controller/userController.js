@@ -4,15 +4,12 @@ import bcrypt from "bcrypt";
 import userSchema from "../model/dataReal/userdata.js";
 import HttpError from "../model/Http-Error.js";
 import { validationResult } from "express-validator";
+
 export const user = async (req, res, next) => {
   try {
-    if (dataUser.length === 0) {
-      // const error = new Error("Data kosong");
-      // error.statusCode = 404;
-      // throw error;
-
+    const dataUser = await userSchema.find({}, "-password");
+    if (dataUser.length === 0)
       throw new HttpError("gk bisa ditemukan, data memang kosong", 404);
-    }
 
     return res.status(200).json({
       allUser: dataUser,
@@ -24,9 +21,8 @@ export const user = async (req, res, next) => {
 
 export const daftarUser = async (req, res, next) => {
   try {
-    const { email, nama, password, gambar, passValidasi } = req.body;
+    const { email, nama, password, deskripsi } = req.body;
     const data = await userSchema.find({ email });
-
     if (data.length > 0) throw new HttpError("Email sudah digunakan", 404);
     const error = validationResult(req);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 404);
@@ -38,13 +34,13 @@ export const daftarUser = async (req, res, next) => {
           const daftar = await new userSchema({
             email,
             nama,
+            deskripsi,
             password: hash,
-            gambar,
-            places: 0,
+            places: [],
           }).save();
 
           res.status(201).json({
-            daftar,
+            userss: daftar.toObject({ getters: true }),
             pesan: "sukses tambah data",
           });
         }
@@ -62,13 +58,20 @@ export const loginUser = async (req, res, next) => {
     const { email, password } = req.body;
     const error = validationResult(req);
 
-    console.log(!error.isEmpty(), `tete`);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
 
-    const dataLogin = { email, password };
-    res.status(201).json({
-      dataLogin,
-      pesan: "sukses login",
+    const dataPAssword = await userSchema.findOne({ email });
+
+    await bcrypt.compare(password, dataPAssword.password, (err, result) => {
+      try {
+        if (!result) throw new HttpError("Password Salah", 401);
+        res.status(201).json({
+          pesan: "sukses login",
+          userId: dataPAssword._id,
+        });
+      } catch (err) {
+        next(err);
+      }
     });
   } catch (err) {
     next(err);

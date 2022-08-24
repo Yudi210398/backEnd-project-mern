@@ -1,25 +1,45 @@
-import itemsData from "../model/dummyData/placeData/dataPlace.js";
 import HttpError from "../model/Http-Error.js";
 import PlaceSchema from "../model/dataReal/placeData.js";
 import { validationResult } from "express-validator";
 import { geoCode } from "../model/util/getApiMap.js";
-
+import userSchema from "../model/dataReal/userdata.js";
+import mongoose from "mongoose";
 export const funsiCari = async (id) => {
   const dataPlace = await PlaceSchema.find();
   return dataPlace.filter((data) => data._id.toString() === id);
 };
+
 export const getAllPlace = async (req, res, next) => {
   try {
-    if (itemsData.length === 0)
+    const dataAllPlaces = await PlaceSchema.find();
+    console.log(dataAllPlaces);
+    if (dataAllPlaces.length === 0)
       throw new HttpError("gk bisa ditemukan, data memang kosong", 404);
 
     return res.status(200).json({
-      allPlace: itemsData,
+      allPlace: dataAllPlaces,
     });
   } catch (err) {
     next(err);
   }
 };
+
+export const getMyAllPlaces = async (req, res, next) => {
+  try {
+    const getUserId = req.params.uId;
+    const dataUSer = await userSchema
+      .findOne({ _id: getUserId })
+      .populate("places");
+    if (!dataUSer || dataUSer.places.length === 0)
+      throw new HttpError("Data Tidak Ditemukan Bangsat", 401);
+    res.status(201).json({
+      dataUSer,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getIdUserPlace = async (req, res, next) => {
   try {
     const idUser = req.params.uid;
@@ -57,18 +77,9 @@ export const postDataPlace = async (req, res, next) => {
     const { gambar, namaTempat, deskripsi, creatorId } = req.body;
     const geoCodeMap = await geoCode(namaTempat);
     const error = validationResult(req);
-    // const newPlace = {
-    //   id: v4(),
-    //   gambarUrl,
-    //   namaTempat,
-    //   alamat: await geoCodeMap.alamat,
-    //   deskripsi,
-    //   creatorId,
-    //   kordinat: await geoCodeMap.cordinates,
-    // };
 
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
-
+    console.log(geoCodeMap.cordinates);
     const newPlace = await new PlaceSchema({
       namaTempat,
       deskripsi,
@@ -76,7 +87,16 @@ export const postDataPlace = async (req, res, next) => {
       gambar,
       kordinat: await geoCodeMap.cordinates,
       creatorId,
-    }).save();
+    });
+    let user = await userSchema.findById(creatorId);
+    if (!user) throw new HttpError("User Tidak Ada", 401);
+
+    const sess = await mongoose.startSession();
+    await sess.startTransaction();
+    await newPlace.save({ session: sess });
+    await user.places.push(newPlace);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
 
     res.status(201).json({
       newPlace,
@@ -109,24 +129,6 @@ export const patchPlace = async (req, res, next) => {
       hasil,
       pesan: "Sukses Edith",
     });
-    // const dataEdithId = itemsData.filter((data) => data.id === idPlaceEdith);
-
-    // const findIndexPlace = itemsData.findIndex(
-    //   (dataIndex) => dataIndex.id === idPlaceEdith
-    // );
-    // const hasilPlace = dataEdithId[0];
-    // hasilPlace.namaTempat = namaTempat;
-    // hasilPlace.deskripsi = deskripsi;
-    // hasilPlace.alamat = await editGeoCode.alamat;
-    // hasilPlace.kordinat = await editGeoCode.cordinates;
-    // if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
-
-    // itemsData[findIndexPlace] = hasilPlace;
-    // res.status(201).json({
-    //   hasilPlace,
-    //   pesan: "Sukses Edith",
-    //   itemsData,
-    // });
   } catch (err) {
     next(err);
   }
@@ -135,12 +137,18 @@ export const patchPlace = async (req, res, next) => {
 export const deletePlaceId = async (req, res, next) => {
   try {
     const params = req.params.did;
-    const deleteData = await PlaceSchema.findByIdAndRemove(params);
-    if (deleteData)
-      res.status(201).json({
-        deleteData,
-        pesan: "sukses hapus data",
-      });
+    const deleteData = await PlaceSchema.findById(params).populate("creatorId");
+    if (!deleteData) throw new HttpError("data tempat tidak ada", 401);
+    const sess = await mongoose.startSession();
+    await sess.startTransaction();
+    await deleteData.remove({ session: sess });
+    await deleteData.creatorId.places.pull(deleteData);
+    await deleteData.creatorId.save();
+    await sess.commitTransaction();
+
+    res.status(201).json({
+      pesan: "sukses hapus data",
+    });
   } catch (err) {
     next(err);
   }

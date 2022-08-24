@@ -18,8 +18,8 @@ router.post(
       .toLowerCase()
       .trim()
       .custom(async (value, { req }) => {
-        let user = dataFilterData(dataUser, value);
-        if (user.length > 0) throw new HttpError("email sudah terdatar", 404);
+        let user = await userSchema.findOne({ email: value });
+        if (user) throw new HttpError("email sudah terdatar", 404);
         return true;
       }),
     body("nama")
@@ -27,13 +27,9 @@ router.post(
       .isLength({ min: 3 })
       .isString()
       .withMessage("Tolong diisi"),
-    body("gambar")
-      .notEmpty()
-      .isLength({ min: 3 })
-      .isString()
-      .withMessage("Tolong diisi"),
     body("password").isLength({ min: 5 }).withMessage("minimal 5 karaketer"),
     body("passValidasi").custom((value, { req }) => {
+      console.log(value === req.body.password);
       if (value !== req.body.password)
         throw new HttpError("password harus sama", 401);
       return true;
@@ -60,23 +56,7 @@ router.post(
           );
         return true;
       }),
-    body("password")
-      .isLength({ min: 5 })
-      .withMessage("minimal 5 karaketer")
-      .custom(async (value, { req }) => {
-        await bcrypt.compare(value, users.password, (err, result) => {
-          try {
-            console.log(err, users.password, result);
-            if (result === false)
-              throw new HttpError(
-                "passsword tidak ditemukan, coba lagi, atau daftar akun",
-                404
-              );
-          } catch (err) {
-            throw err;
-          }
-        });
-      }),
+    body("password").isLength({ min: 5 }).withMessage("minimal 5 karaketer"),
   ],
   loginUser
 );
