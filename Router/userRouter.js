@@ -4,12 +4,36 @@ import { body } from "express-validator";
 import HttpError from "../model/Http-Error.js";
 const router = express.Router();
 import userSchema from "../model/dataReal/userdata.js";
-import bcrypt from "bcrypt";
+import multer from "multer";
+import { v4 } from "uuid";
 let users;
+const MIME_TYPE_MAP = {
+  "image/png": "png",
+  "image/jpeg": "jpeg",
+  "image/jpg": "jpg",
+};
+
+const simpanFile = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads");
+  },
+  filename: (req, file, cb) => {
+    const ext = MIME_TYPE_MAP[file.mimetype];
+    cb(null, `${v4()}.${ext}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  const isValid = !!MIME_TYPE_MAP[file.mimetype];
+  console.log(isValid);
+  let error = isValid ? null : new Error("Invalid mime type!");
+  cb(error, isValid);
+};
 
 router.get("/users", user);
 router.post(
   "/users/daftar",
+  multer({ storage: simpanFile, fileFilter }).single("gambar"),
   [
     body("email")
       .isEmail()
@@ -29,7 +53,7 @@ router.post(
       .withMessage("Tolong diisi"),
     body("password").isLength({ min: 5 }).withMessage("minimal 5 karaketer"),
     body("passValidasi").custom((value, { req }) => {
-      console.log(value === req.body.password);
+      console.log(value, req.body.password);
       if (value !== req.body.password)
         throw new HttpError("password harus sama", 401);
       return true;

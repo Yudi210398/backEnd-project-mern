@@ -1,4 +1,5 @@
 import bodyParser from "body-parser";
+import fs from "fs";
 import express from "express";
 import routerUser from "./Router/userRouter.js";
 import path from "path";
@@ -13,7 +14,7 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
 (async () => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
-
+  app.use("/uploads", express.static("uploads"));
   app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader(
@@ -34,7 +35,11 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
   app.use((error, req, res, next) => {
     let pesan;
     let status;
-    console.log(error.message, error.statusCode);
+
+    if (req.file) fs.unlink(req.file.path, (err) => console.log(err));
+
+    if (res.headerSent) return next(error);
+
     if (error.statusCode === 500) {
       status = error.statusCode;
       pesan = "Server Bermasalah";
@@ -48,7 +53,7 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
   });
 
   await mongoose.connect(URLDATABASE, async (err, db) => {
-    if (err) console.log(err, `tete`);
+    if (err) console.log(err);
     await app.listen(port, () => console.log(`konek dan konek ke database`));
     db.on("disconnect", function (errrs) {
       console.log("Error...close", errrs);

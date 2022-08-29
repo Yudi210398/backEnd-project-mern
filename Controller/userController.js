@@ -1,5 +1,3 @@
-import dataUser from "../model/dummyData/userData/data.js";
-
 import bcrypt from "bcrypt";
 import userSchema from "../model/dataReal/userdata.js";
 import HttpError from "../model/Http-Error.js";
@@ -35,6 +33,7 @@ export const daftarUser = async (req, res, next) => {
             email,
             nama,
             deskripsi,
+            gambar: req.file.path,
             password: hash,
             places: [],
           }).save();
@@ -57,7 +56,7 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const error = validationResult(req);
-
+    console.log(email, password);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
 
     const dataPAssword = await userSchema.findOne({ email });

@@ -15,3 +15,4 @@ const UserSchema = new Schema({
 UserSchema.plugin(mongooseUniqueValidator);
 
 export default mongoose.model("UserSchema", UserSchema);
+  

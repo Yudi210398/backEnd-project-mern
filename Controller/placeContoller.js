@@ -43,13 +43,15 @@ export const getMyAllPlaces = async (req, res, next) => {
 export const getIdUserPlace = async (req, res, next) => {
   try {
     const idUser = req.params.uid;
-    const dataPlace = await PlaceSchema.find();
-    const data = dataPlace.filter((data) => data.creatorId === idUser);
-    if (data.length < 1)
+    const dataPlace = await userSchema
+      .findOne({ _id: idUser })
+      .populate("places");
+
+    if (dataPlace.length < 1 || dataPlace.places.length < 1)
       throw new HttpError("data tidak ditemukan, kocak lu", 404);
 
     return res.status(200).json({
-      data,
+      dataPlace: dataPlace.places,
       pesan: "Sukses Get Data",
     });
   } catch (err) {
@@ -110,7 +112,7 @@ export const postDataPlace = async (req, res, next) => {
 export const patchPlace = async (req, res, next) => {
   try {
     const idPlaceEdith = req.params.eid;
-    const { namaTempat, deskripsi } = req.body;
+    const { namaTempat, deskripsi, gambar } = req.body;
     const editGeoCode = await geoCode(namaTempat);
     const error = validationResult(req);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
@@ -121,6 +123,7 @@ export const patchPlace = async (req, res, next) => {
 
     hasil.namaTempat = !namaTempat ? hasil.namaTempat : namaTempat;
     hasil.deskripsi = !deskripsi ? hasil.deskripsi : deskripsi;
+    hasil.gambar = !gambar ? hasil.gambar : gambar;
     hasil.alamat = await editGeoCode.alamat;
     hasil.kordinat = await editGeoCode.cordinates;
 
@@ -139,10 +142,11 @@ export const deletePlaceId = async (req, res, next) => {
     const params = req.params.did;
     const deleteData = await PlaceSchema.findById(params).populate("creatorId");
     if (!deleteData) throw new HttpError("data tempat tidak ada", 401);
+
     const sess = await mongoose.startSession();
     await sess.startTransaction();
     await deleteData.remove({ session: sess });
-    await deleteData.creatorId.places.pull(deleteData);
+    await deleteData.creatorId.places.pull(deleteData._id);
     await deleteData.creatorId.save();
     await sess.commitTransaction();
 
