@@ -7,6 +7,7 @@ import userSchema from "../model/dataReal/userdata.js";
 import multer from "multer";
 import { v4 } from "uuid";
 let users;
+
 const MIME_TYPE_MAP = {
   "image/png": "png",
   "image/jpeg": "jpeg",
@@ -25,15 +26,19 @@ const simpanFile = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const isValid = !!MIME_TYPE_MAP[file.mimetype];
-  console.log(isValid);
   let error = isValid ? null : new Error("Invalid mime type!");
   cb(error, isValid);
 };
 
+export const fileUpload = multer({
+  storage: simpanFile,
+  fileFilter,
+});
+
 router.get("/users", user);
 router.post(
   "/users/daftar",
-  multer({ storage: simpanFile, fileFilter }).single("gambar"),
+  fileUpload.single("gambar"),
   [
     body("email")
       .isEmail()

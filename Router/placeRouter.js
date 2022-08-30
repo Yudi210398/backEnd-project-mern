@@ -9,6 +9,7 @@ import {
   postDataPlace,
 } from "../Controller/placeContoller.js";
 import { body } from "express-validator";
+import { fileUpload } from "./userRouter.js";
 const validateFactor = () => {
   return [
     body("namaTempat").isString().trim().notEmpty(),
@@ -24,7 +25,12 @@ routerPlace.get("/places", getAllPlace);
 routerPlace.get("/places/user/:uid", getIdUserPlace);
 routerPlace.get("/places/myallplaces/:uId", getMyAllPlaces);
 routerPlace.get("/places/:pid", getIdPlace);
-routerPlace.post("/places", validateFactor(), postDataPlace);
+routerPlace.post(
+  "/places",
+  fileUpload.single("gambar"),
+  validateFactor(),
+  postDataPlace
+);
 routerPlace.patch("/places/:eid", validateFactor(), patchPlace);
 routerPlace.delete("/places/:did", deletePlaceId);
 

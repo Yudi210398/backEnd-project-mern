@@ -86,7 +86,7 @@ export const postDataPlace = async (req, res, next) => {
       namaTempat,
       deskripsi,
       alamat: await geoCodeMap.alamat,
-      gambar,
+      gambar: req.file.path,
       kordinat: await geoCodeMap.cordinates,
       creatorId,
     });
@@ -121,8 +121,8 @@ export const patchPlace = async (req, res, next) => {
     if (dataEdit.length === 0)
       throw new HttpError("gk bisa ditemukan, data memang kosong", 404);
 
-    hasil.namaTempat = !namaTempat ? hasil.namaTempat : namaTempat;
-    hasil.deskripsi = !deskripsi ? hasil.deskripsi : deskripsi;
+    hasil.namaTempat = namaTempat;
+    hasil.deskripsi = deskripsi;
     hasil.gambar = !gambar ? hasil.gambar : gambar;
     hasil.alamat = await editGeoCode.alamat;
     hasil.kordinat = await editGeoCode.cordinates;
