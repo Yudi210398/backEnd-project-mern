@@ -4,6 +4,7 @@ import { validationResult } from "express-validator";
 import { geoCode } from "../model/util/getApiMap.js";
 import userSchema from "../model/dataReal/userdata.js";
 import mongoose from "mongoose";
+import fs from "fs";
 export const funsiCari = async (id) => {
   const dataPlace = await PlaceSchema.find();
   return dataPlace.filter((data) => data._id.toString() === id);
@@ -12,7 +13,6 @@ export const funsiCari = async (id) => {
 export const getAllPlace = async (req, res, next) => {
   try {
     const dataAllPlaces = await PlaceSchema.find();
-    console.log(dataAllPlaces);
     if (dataAllPlaces.length === 0)
       throw new HttpError("gk bisa ditemukan, data memang kosong", 404);
 
@@ -76,7 +76,7 @@ export const getIdPlace = async (req, res, next) => {
 
 export const postDataPlace = async (req, res, next) => {
   try {
-    const { gambar, namaTempat, deskripsi, creatorId } = req.body;
+    const { namaTempat, deskripsi, creatorId } = req.body;
     const geoCodeMap = await geoCode(namaTempat);
     const error = validationResult(req);
 
@@ -118,12 +118,13 @@ export const patchPlace = async (req, res, next) => {
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
     const dataEdit = await funsiCari(idPlaceEdith);
     const hasil = dataEdit[0];
-    if (dataEdit.length === 0)
+    console.log(hasil, `tete hana`);
+    if (dataEdit.length === 0 || null)
       throw new HttpError("gk bisa ditemukan, data memang kosong", 404);
-
+    fs.unlink(hasil.gambar, (err) => console.log(err, `tete sasa`));
     hasil.namaTempat = namaTempat;
     hasil.deskripsi = deskripsi;
-    hasil.gambar = !gambar ? hasil.gambar : gambar;
+    hasil.gambar = req.file.path;
     hasil.alamat = await editGeoCode.alamat;
     hasil.kordinat = await editGeoCode.cordinates;
 
@@ -149,7 +150,7 @@ export const deletePlaceId = async (req, res, next) => {
     await deleteData.creatorId.places.pull(deleteData._id);
     await deleteData.creatorId.save();
     await sess.commitTransaction();
-
+    fs.unlink(deleteData.gambar, (err) => console.log(err));
     res.status(201).json({
       pesan: "sukses hapus data",
     });

@@ -38,8 +38,6 @@ const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mon
 
     if (req.file) fs.unlink(req.file.path, (err) => console.log(err));
 
-    if (res.headerSent) return next(error);
-
     if (error.statusCode === 500) {
       status = error.statusCode;
       pesan = "Server Bermasalah";

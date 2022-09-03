@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import userSchema from "../model/dataReal/userdata.js";
 import HttpError from "../model/Http-Error.js";
 import { validationResult } from "express-validator";
-
+import jwt from "jsonwebtoken";
 export const user = async (req, res, next) => {
   try {
     const dataUser = await userSchema.find({}, "-password");
@@ -56,7 +56,6 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const error = validationResult(req);
-    console.log(email, password);
     if (!error.isEmpty()) throw new HttpError(error.array()[0].msg, 401);
 
     const dataPAssword = await userSchema.findOne({ email });
@@ -64,10 +63,25 @@ export const loginUser = async (req, res, next) => {
     await bcrypt.compare(password, dataPAssword.password, (err, result) => {
       try {
         if (!result) throw new HttpError("Password Salah", 401);
-        res.status(201).json({
-          pesan: "sukses login",
-          userId: dataPAssword._id,
-        });
+
+        if (result) {
+          const token = jwt.sign(
+            {
+              email: dataPAssword.email,
+              id: dataPAssword._id,
+            },
+            "rahasia_ilahi",
+            { expiresIn: "1h" }
+          );
+
+          res.status(201).json({
+            pesan: "sukses login",
+            userId: dataPAssword._id,
+            token,
+          });
+
+          throw new HttpError("Password Salah", 401);
+        }
       } catch (err) {
         next(err);
       }

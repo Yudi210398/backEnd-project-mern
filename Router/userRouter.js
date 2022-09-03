@@ -6,6 +6,7 @@ const router = express.Router();
 import userSchema from "../model/dataReal/userdata.js";
 import multer from "multer";
 import { v4 } from "uuid";
+import { jsonVerify } from "../middleware/json-verify.js";
 let users;
 
 const MIME_TYPE_MAP = {
@@ -58,7 +59,6 @@ router.post(
       .withMessage("Tolong diisi"),
     body("password").isLength({ min: 5 }).withMessage("minimal 5 karaketer"),
     body("passValidasi").custom((value, { req }) => {
-      console.log(value, req.body.password);
       if (value !== req.body.password)
         throw new HttpError("password harus sama", 401);
       return true;
@@ -69,7 +69,7 @@ router.post(
 
 router.post(
   "/users/login",
-  [
+  await [
     body("email")
       .isEmail()
       .normalizeEmail()
