@@ -26,19 +26,20 @@ routerPlace.get("/places", getAllPlace);
 routerPlace.get("/places/user/:uid", getIdUserPlace);
 routerPlace.get("/places/myallplaces/:uId", getMyAllPlaces);
 routerPlace.get("/places/:pid", getIdPlace);
-routerPlace.use(jsonVerify);
 routerPlace.post(
   "/places",
   fileUpload.single("gambar"),
   validateFactor(),
+  jsonVerify,
   postDataPlace
 );
 routerPlace.patch(
   "/places/:eid",
   fileUpload.single("gambar"),
   validateFactor(),
+  jsonVerify,
   patchPlace
 );
-routerPlace.delete("/places/:did", deletePlaceId);
+routerPlace.delete("/places/:did", jsonVerify, deletePlaceId);
 
 export default routerPlace;

@@ -9,7 +9,8 @@ import mongoose from "mongoose";
 const __dirname = path.resolve();
 const app = express();
 const port = 5000;
-const URLDATABASE = `mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mongodb.net/mernProjectData?retryWrites=true&w=majority`;
+const URLDATABASE =
+  "mongodb+srv://runatyudi:kawasanrokok1998@cluster0.oaqmd.mongodb.net/mernProjectData?retryWrites=true&w=majority";
 
 (async () => {
   app.use(bodyParser.json());

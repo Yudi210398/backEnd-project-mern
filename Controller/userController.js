@@ -74,14 +74,13 @@ export const loginUser = async (req, res, next) => {
             { expiresIn: "1h" }
           );
 
-          res.status(201).json({
+          return res.status(201).json({
             pesan: "sukses login",
             userId: dataPAssword._id,
             token,
           });
-
-          throw new HttpError("Password Salah", 401);
         }
+        throw new HttpError("Password Salah", 401);
       } catch (err) {
         next(err);
       }
