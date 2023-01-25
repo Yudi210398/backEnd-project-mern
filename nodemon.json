@@ -1,0 +1,7 @@
+{
+  "env": {
+    "DB_PASSWORD": "kawasanrokok1998",
+    "DB_USERNAME": "runatyudi",
+    "DB_NAMADATABASE": "mernProjectData"
+  }
+}
